@@ -1,12 +1,13 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
 
 AUTH_TOKEN = "lobSQee6r_TCdebGLQZQ04yLc6dJ3utIugNCno5_P4zLo-Odjs3m6QFScjmaWlCHaINDjfBOamOj9tYIqcwFB5hvcBQnF3yTGoV4zGAIdCBG2bwMkfRthQCh0N9YW3Yx"
 
 express()
-  .use(express.static(path.join(__dirname, 'public')))
+  .use(cors())
   .get('/business_rating', function(req, res){
   		name = req.query.name;
   		address = req.query.address;
