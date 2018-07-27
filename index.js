@@ -21,7 +21,7 @@ express()
 
   		business_id = null;
 
-  		cachedYelpGetBusinessIdPromise(name, address, city, state, country)
+  		cachedYelpGetBusinessRatingInfoPromise(name, address, city, state, country)
   			.then((response_data) => {
   				if (!response_data.hasOwnProperty("rating")){
   					throw NO_RATING_ERROR;
@@ -36,7 +36,7 @@ express()
   			})
   			.catch((error) => {
   				console.log(error)
-  				res.send(error)
+  				res.status(error.my_code).send(error.message)
   			})
 
   })
@@ -52,12 +52,12 @@ function paramStringify(params){
 }
 
 // ERRORS
-COULDNT_CONNECT_ERROR = new Error(500, "Error: Couldn't connect to Yelp");
-NO_BUSINESS_ERROR = new Error(404, "Error: Could not find business on Yelp");
-NO_RATING_ERROR = new Error(400, "Error: Business does not have rating");
+COULDNT_CONNECT_ERROR = {name: "CouldntConnectError", my_code: 500, message: "Error: Couldn't connect to Yelp"};
+NO_BUSINESS_ERROR = {name: "NoBusinessError", my_code: 404, message: "Error: Couldn't find business on Yelp"};
+NO_RATING_ERROR = {name: "NoRatingError", my_code: 400, message: "Error: Business does not have rating"};
 
 
-function cachedYelpGetBusinessIdPromise(name, address, city="San Francisco", state="CA", country="US"){
+function cachedYelpGetBusinessRatingInfoPromise(name, address, city="San Francisco", state="CA", country="US"){
 	var req_key = paramStringify({name: name, address: address})
 
 	// check cache first.
@@ -67,9 +67,9 @@ function cachedYelpGetBusinessIdPromise(name, address, city="San Francisco", sta
 	} else {
 		return yelpGetBusinessIdPromise(name, address, city, state, country)
 			.then((response) => {
-				found_business = response.data.businesses[0]
-				if (found_business && found_business.hasOwnProperty("id")){
-					business_id = response.data.businesses[0].id
+				if (response.data.businesses.length > 0){
+					found_business = response.data.businesses[0]
+					business_id = found_business.id
 					return yelpRatingPromise(business_id)
 						.then((response) => {
 							rating_cache.set(req_key, JSON.stringify(response.data));
@@ -82,7 +82,7 @@ function cachedYelpGetBusinessIdPromise(name, address, city="San Francisco", sta
 					throw NO_BUSINESS_ERROR;
 				}
 			})
-			.catch((error) => { throw COULDNT_CONNECT_ERROR; });
+			.catch((error) => { throw error });
 	}
 }
 
