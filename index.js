@@ -3,8 +3,12 @@ const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
 const PORT = process.env.PORT || 5000;
+const NodeCache = require( "node-cache" );
 
 AUTH_TOKEN = "lobSQee6r_TCdebGLQZQ04yLc6dJ3utIugNCno5_P4zLo-Odjs3m6QFScjmaWlCHaINDjfBOamOj9tYIqcwFB5hvcBQnF3yTGoV4zGAIdCBG2bwMkfRthQCh0N9YW3Yx"
+
+// cached info expires hourly
+const rating_cache = new NodeCache({ stdTTL: 3600 });
 
 express()
   .use(cors())
@@ -17,37 +21,73 @@ express()
 
   		business_id = null;
 
-		yelpGetBusinessIdPromise(name, address, city, state, country)
-			.then((response) => {
-				business_id = response.data.businesses[0].id
-				console.log(business_id);
-			})
-			.then(() => {
-				yelpRatingPromise(business_id)
-					.then((response) => {
-						res.send({
-							name: name,
-							review_count: response.data.review_count,
-							rating: response.data.rating
-						})
-					})
-					.catch((error) => {throw error } )
-			})
-			.catch((error) => { throw error })
+  		cachedYelpGetBusinessIdPromise(name, address, city, state, country)
+  			.then((response_data) => {
+  				if (!response_data.hasOwnProperty("rating")){
+  					throw NO_RATING_ERROR;
+  				}
+
+  				res.send({
+					name: name,
+					review_count: response_data.review_count,
+					rating: response_data.rating
+				});
+  			})
+  			.catch((error) => {
+  				console.log(error)
+  			})
 
   })
   .listen(PORT, () => console.log(`Listening on ${ PORT }`))
 
+// turn a params object into the form key=value&key=value&key=value
+function paramStringify(params){
+	args = []
+	for (key in params){
+		args.push(key+"="+encodeURIComponent(params[key]))
+	}
+	return args.join("&");
+}
+
+// ERRORS
+COULDNT_CONNECT_ERROR = new Error(500, "Error: Couldn't connect to Yelp");
+NO_BUSINESS_ERROR = new Error(404, "Error: Could not find business on Yelp");
+NO_RATING_ERROR = new Error(400, "Error: Business does not have rating");
+
+
+function cachedYelpGetBusinessIdPromise(name, address, city="San Francisco", state="CA", country="US"){
+	var req_key = paramStringify({name: name, address: address})
+
+	// check cache first.
+	cachedRatingResponse = rating_cache.get(req_key)
+	if (cachedRatingResponse != undefined){
+		return Promise.resolve(JSON.parse(cachedRatingResponse))
+	} else {
+		return yelpGetBusinessIdPromise(name, address, city, state, country)
+			.then((response) => {
+				found_business = response.data.businesses[0]
+				if (found_business && found_business.hasOwnProperty("id")){
+					business_id = response.data.businesses[0].id
+					return yelpRatingPromise(business_id)
+						.then((response) => {
+							rating_cache.set(req_key, JSON.stringify(response.data));
+							return response.data;
+						})
+						.catch((error) => {
+							throw COULDNT_CONNECT_ERROR;
+						});
+				} else {
+					throw NO_BUSINESS_ERROR;
+				}
+			})
+			.catch((error) => { throw COULDNT_CONNECT_ERROR; });
+	}
+}
 
 function getRequestPromise(url, params){
 	request_url = url
 	if (params) {
-		args = []
-		for (key in params){
-			args.push(key+"="+encodeURIComponent(params[key]))
-		}
-
-		request_url += "?"+args.join("&")
+		request_url += "?"+paramStringify(params)
 	}
 
 	console.log(request_url)
