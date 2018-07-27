@@ -28,6 +28,7 @@ express()
   				}
   				business_rating_response = {
 					name: name,
+					alias: response_data.alias,
 					review_count: response_data.review_count,
 					rating: response_data.rating
 				}
