@@ -8,7 +8,7 @@ const NodeCache = require( "node-cache" );
 AUTH_TOKEN = "lobSQee6r_TCdebGLQZQ04yLc6dJ3utIugNCno5_P4zLo-Odjs3m6QFScjmaWlCHaINDjfBOamOj9tYIqcwFB5hvcBQnF3yTGoV4zGAIdCBG2bwMkfRthQCh0N9YW3Yx"
 
 // cached info expires hourly
-const rating_cache = new NodeCache({ stdTTL: 10800 });
+const rating_cache = new NodeCache({ stdTTL: 82800 });
 
 express()
   .use(cors())
