@@ -26,15 +26,17 @@ express()
   				if (!response_data.hasOwnProperty("rating")){
   					throw NO_RATING_ERROR;
   				}
-
-  				res.send({
+  				business_rating_response = {
 					name: name,
 					review_count: response_data.review_count,
 					rating: response_data.rating
-				});
+				}
+  				console.log(business_rating_response)
+  				res.send(business_rating_response);
   			})
   			.catch((error) => {
   				console.log(error)
+  				res.send(error)
   			})
 
   })
