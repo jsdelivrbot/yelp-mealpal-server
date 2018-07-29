@@ -12,18 +12,18 @@ const rating_cache = new NodeCache({ stdTTL: 82800 });
 
 // ERRORS
 const COULDNT_CONNECT_ERROR = {
-	name: "CouldntConnectError", 
-	my_code: 500, 
+	name: "CouldntConnectError",
+	my_code: 500,
 	message: "Error: Couldn't connect to Yelp"
 };
 const NO_BUSINESS_ERROR = {
-	name: "NoBusinessError", 
-	my_code: 404, 
+	name: "NoBusinessError",
+	my_code: 404,
 	message: "Error: Couldn't find business on Yelp"
 };
 const NO_RATING_ERROR = {
-	name: "NoRatingError", 
-	my_code: 400, 
+	name: "NoRatingError",
+	my_code: 400,
 	message: "Error: Business does not have rating"
 };
 
@@ -42,13 +42,13 @@ express()
 
   		cachedYelpGetBusinessRatingInfoPromise(name, address, city, state, country)
   			.then((response_data) => {
-				console.log(response_data)
+				console.log(response_data);
   				res.send(response_data);
   			})
   			.catch((error) => {
-  				console.log(error)
-  				res.status(error.my_code).send(error.message)
-  			})
+  				console.log(error);
+  				res.status(error.my_code).send(error.message);
+  			});
 
   })
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
@@ -60,7 +60,7 @@ function addToRatingCache(key, object={}){
 function cachedYelpGetBusinessRatingInfoPromise(
 	name, address, city="San Francisco", state="CA", country="US"){
 
-	var req_key = helpers.paramStringify({name: name, address: address})
+	var req_key = helpers.paramStringify({name: name, address: address});
 
 	// check cache first. if it exists there, no need to get data from yelp
 	cachedRatingResponse = rating_cache.get(req_key);
@@ -72,34 +72,34 @@ function cachedYelpGetBusinessRatingInfoPromise(
 		.then((response) => {
 			if (response.data.businesses.length == 0)
 				return Promise.reject(NO_BUSINESS_ERROR);
-			
+
 			business_id = response.data.businesses[0].id
 
 			return Promise.all([
-				business_id, 
+				business_id,
 				yrequests.yelpRatingPromise(business_id)
-			]); 
+			]);
 		})
 		.then(results_of_both => {
 			business_info_response = results_of_both[1].data;
+			//for now, Fusion API guarantees that only
+			// businesses with ratings are reurned; this is a safeguard.
 			if (!business_info_response.hasOwnProperty("rating"))
 				return Promise.reject(NO_RATING_ERROR);
-				// TODO: remove this if we're safely under the api limit
-				// addToRatingCache(req_key, {});
 
 			business_rating_response = {
 				name: business_info_response.name,
 				alias: business_info_response.alias,
-				review_count: business_info_response.review_count,	
+				review_count: business_info_response.review_count,
 				rating: business_info_response.rating
 			}
 			addToRatingCache(req_key, business_rating_response);
 
 			return business_rating_response;
-		
+
 		})
 		.catch((error) => {
-			return Promise.reject((error.hasOwnProperty('my_code') ? 
+			return Promise.reject((error.hasOwnProperty('my_code') ?
 				error : COULDNT_CONNECT_ERROR));
 		})
 }
@@ -109,5 +109,5 @@ module.exports = {
 	cachedYelpGetBusinessRatingInfoPromise: cachedYelpGetBusinessRatingInfoPromise,
 	COULDNT_CONNECT_ERROR: COULDNT_CONNECT_ERROR,
 	NO_BUSINESS_ERROR: NO_BUSINESS_ERROR,
-	NO_RATING_ERROR: NO_RATING_ERROR
+	NO_RATING_ERROR: NO_RATING_ERROR,
 }

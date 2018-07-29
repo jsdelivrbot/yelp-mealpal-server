@@ -9,7 +9,7 @@ var mock = new MockAdapter(axios);
 
 // unit tests: yelp requests get called correctly
 describe('Yelp Get Request Creation', function() {
-	axiosStub = null; 
+	axiosStub = null;
 	beforeEach(function(){
 		axiosStub = sinon.stub(axios, 'get');
 	});
@@ -45,45 +45,66 @@ describe('Yelp Get Request Creation', function() {
 	});
 
 	it('calls business with biz id', function(){
-		yrequests.yelpRatingPromise(
-			'fakebizid');
+		yrequests.yelpRatingPromise('fakebizid');
 		get_request_args = axiosStub.getCall(0).args;
 		assert.equal(get_request_args[0], "https://api.yelp.com/v3/businesses/fakebizid");
 	});
 });
 
 
+function assertPromiseError(promise, expectedError, done){
+	promise.then(response => {
+		console.log(response);
+		assert(false);
+		done();
+	})
+	.catch(err => {
+		assert.equal(err, expectedError);
+		done();
+	});
+}
+
+function assertPromiseSuccess(promise, expectedResponse, done){
+	promise.then(response => {
+		assert.deepEqual(response, expectedResponse);
+		done();
+	})
+	.catch(err => {
+		assert(false);
+		done();
+	});
+}
+
 
 describe('Yelp request response testing', function(){
-	after(() => {
-		mock.restore();
-	})
-	afterEach(() => {
-		mock.reset();
-	});
+	after(() => mock.restore())
+	afterEach(() => mock.reset());
 
 	describe('Yelp auth not set up correctly', function(){
 		const env = Object.assign({}, process.env);
-		after(() => {
-		    process.env = env;
-		});
+		after(() => process.env = env );
+
 		it('throws connection error if Yelp auth does not work', function(done){
 			process.env.YELP_AUTH = '';
-			app.cachedYelpGetBusinessRatingInfoPromise('testname', 'testaddress')
-				.then(response => {assert(false); done();})
-				.catch(err => {assert.equal(err, app.COULDNT_CONNECT_ERROR); done();});
+			assertPromiseError(
+				app.cachedYelpGetBusinessRatingInfoPromise('testname', 'testaddress'),
+				app.COULDNT_CONNECT_ERROR,
+				done
+			);
 		});
 	});
 
 	describe('error handling from yelp api response', function(){
 		it('throws no business error if business cannot be matched', function(done){
-			mock.onGet('/https://api.yelp.com/v3/businesses/matches').reply(200, { 
+			mock.onGet('/https://api.yelp.com/v3/businesses/matches').reply(200, {
 				"businesses": []
 			});
 
-			app.cachedYelpGetBusinessRatingInfoPromise('testname', 'testaddress')
-				.then(response => {assert(false); done();})
-				.catch(err => {assert.equal(err, app.NO_BUSINESS_ERROR); done();});
+			assertPromiseError(
+				app.cachedYelpGetBusinessRatingInfoPromise('testname', 'testaddress'),
+				app.NO_BUSINESS_ERROR,
+				done
+			);
 		});
 
 		it('is successful if business match and business id are successful', function(done){
@@ -116,7 +137,7 @@ describe('Yelp request response testing', function(){
 				    ]
 				});
 
-			mock.onGet('/https://api.yelp.com/v3/businesses/fakebizid1').reply(200, 
+			mock.onGet('/https://api.yelp.com/v3/businesses/fakebizid1').reply(200,
 				{
 				    "id": "fakebizid1",
 				    "alias": "fakealias1",
@@ -141,21 +162,16 @@ describe('Yelp request response testing', function(){
 				    "rating": 4
 				}
 			);
-
-			app.cachedYelpGetBusinessRatingInfoPromise('testname1', 'testaddress1')
-				.then(response => {
-					assert.deepEqual(
-						response, 
-						{
-							name: "fakename1",
-							alias: "fakealias1",
-							review_count: 149,	
-							rating: 4
-						}
-					);
-					done();
-				})
-				.catch(err => { assert(false); done(); });
+			assertPromiseSuccess(
+				app.cachedYelpGetBusinessRatingInfoPromise('testname1', 'testaddress1'),
+				{
+					name: "fakename1",
+					alias: "fakealias1",
+					review_count: 149,
+					rating: 4
+				},
+				done
+			);
 		});
 
 		it('throws no rating error if rating not found', function(done){
@@ -188,7 +204,7 @@ describe('Yelp request response testing', function(){
 				    ]
 				});
 
-			mock.onGet('/https://api.yelp.com/v3/businesses/fakebizid2').reply(200, 
+			mock.onGet('/https://api.yelp.com/v3/businesses/fakebizid2').reply(200,
 				{
 				    "id": "fakebizid2",
 				    "alias": "fakealias2",
@@ -196,10 +212,12 @@ describe('Yelp request response testing', function(){
 				}
 			);
 
-			app.cachedYelpGetBusinessRatingInfoPromise('testname2', 'testaddress2')
-			.then(response => {assert(false); done();})
-			.catch(err => {assert.equal(err, app.NO_RATING_ERROR); done();});
+			assertPromiseError(
+				app.cachedYelpGetBusinessRatingInfoPromise('testname2', 'testaddress2'),
+				app.NO_RATING_ERROR,
+				done
+			);
 		});
 
 	});
-});	
+});

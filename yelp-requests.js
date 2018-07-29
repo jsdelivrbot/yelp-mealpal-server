@@ -28,6 +28,6 @@ function yelpGetBusinessIdPromise(bname, baddress, bcity="San Francisco", bstate
 }
 
 module.exports = {
-  yelpRatingPromise: yelpRatingPromise, 
+  yelpRatingPromise: yelpRatingPromise,
   yelpGetBusinessIdPromise: yelpGetBusinessIdPromise,
 };
