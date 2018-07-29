@@ -7,7 +7,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "mocha"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -26,5 +27,10 @@
     "express"
   ],
   "homepage": "https://github.com/muesugi/yelp-mealpal-server",
-  "author": "muesugi"
+  "author": "muesugi",
+  "devDependencies": {
+    "axios-mock-adapter": "^1.15.0",
+    "mocha": "^5.2.0",
+    "sinon": "^6.1.4"
+  }
 }

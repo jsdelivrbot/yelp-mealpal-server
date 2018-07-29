@@ -1,8 +1,8 @@
 {
-  "name": "Start on Heroku: Node.js",
-  "description": "A barebones Node.js app using Express 4",
-  "repository": "https://github.com/heroku/node-js-getting-started",
+  "name": "Yelp-Mealpal-Server",
+  "description": "Backend for Yelp for MealPal Chrome Extension",
+  "repository": "https://github.com/muesugi/yelp-mealpal-server",
   "logo": "https://cdn.rawgit.com/heroku/node-js-getting-started/master/public/node.svg",
-  "keywords": ["node", "express", "heroku"],
+  "keywords": ["node", "express", "heroku", "yelp"],
   "image": "heroku/nodejs"
 }
