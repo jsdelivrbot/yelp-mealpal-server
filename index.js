@@ -76,5 +76,7 @@ function cachedYelpGetBusinessRatingInfoPromise(name, address, city="San Francis
 					});
 			}
 		})
-		.catch((error) => { return Promise.reject(error) || Promise.reject(COULDNT_CONNECT_ERROR); });
+		.catch((error) => {
+			return Promise.reject((error.hasOwnProperty('my_code') ? error : COULDNT_CONNECT_ERROR));
+		})
 }
